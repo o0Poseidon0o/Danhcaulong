@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý Quỹ Cầu Lông</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans antialiased pb-20">
+
+  <div class="max-w-3xl mx-auto mt-8 bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="bg-blue-600 text-white p-6 text-center">
+      <h1 class="text-2xl font-bold">🏸 Quản Lý Cầu Lông</h1>
+      <p class="text-sm opacity-80 mt-1">Hệ thống chốt sổ, tính tiền thông minh</p>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b overflow-x-auto">
+      <button onclick="openTab('tab-match')" id="btn-tab-match" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">Chốt Sổ</button>
+      <button onclick="openTab('tab-members')" id="btn-tab-members" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Thành Viên</button>
+      <button onclick="openTab('tab-inventory')" id="btn-tab-inventory" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Kho Cầu</button>
+      <button onclick="openTab('tab-history')" id="btn-tab-history" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Lịch Sử</button>
+    </div>
+
+    <div class="p-6">
+      
+      <!-- TAB: CHỐT SỔ -->
+      <div id="tab-match" class="tab-content active">
+        <h2 class="text-xl font-semibold mb-4 text-gray-700">Tạo trận đấu mới</h2>
+        
+        <div class="space-y-5">
+          <!-- Điểm danh -->
+          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h3 class="font-medium text-gray-700 mb-3">1. Điểm danh (<span id="attendance-count">0</span> người)</h3>
+            <div id="attendance-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Chi phí -->
+          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h3 class="font-medium text-gray-700 mb-3">2. Chi phí</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Tiền sân (VNĐ)</label>
+                <input type="number" id="court-fee" class="w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="VD: 200000" oninput="calculatePreview()">
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Số quả cầu đã dùng</label>
+                <input type="number" id="shuttles-used" class="w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="VD: 8" oninput="calculatePreview()">
+                <p class="text-xs text-gray-500 mt-1">Cầu dư trong kho: <span id="preview-inventory" class="font-bold">...</span> quả</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview & Chốt sổ -->
+          <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+            <h3 class="font-medium text-blue-800 mb-2">Tạm tính:</h3>
+            <div class="text-sm text-blue-700 space-y-1 mb-4">
+              <p>Tiền cầu (tính theo FIFO): <span id="preview-shuttle-cost" class="font-bold text-base">0đ</span></p>
+              <p>Tổng chi phí buổi đánh: <span id="preview-total-cost" class="font-bold text-base">0đ</span></p>
+              <p>Mỗi người: <span id="preview-cost-per-person" class="font-bold text-lg text-red-600">0đ</span></p>
+            </div>
+            <button onclick="submitMatch()" id="btn-submit-match" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow">
+              ✅ CHỐT SỔ & TRỪ TIỀN
+            </button>
+          </div>
+
+          <!-- Khu vực Báo Cáo Zalo -->
+          <div id="zalo-report-section" class="hidden mt-6">
+            <h3 class="font-medium text-green-700 mb-2">🎉 Đã chốt sổ thành công! Báo cáo Zalo:</h3>
+            <textarea id="zalo-report-text" class="w-full h-40 p-3 border border-green-300 rounded bg-green-50 text-sm font-mono" readonly></textarea>
+            <button onclick="copyZaloReport()" class="mt-2 w-full bg-green-600 text-white font-medium py-2 rounded hover:bg-green-700">
+              📋 Copy để dán vào Zalo
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB: THÀNH VIÊN -->
+      <div id="tab-members" class="tab-content">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-gray-700">Danh sách & Quỹ</h2>
+          <button onclick="openAddMemberModal()" class="bg-gray-800 text-white px-3 py-1 text-sm rounded hover:bg-gray-700">+ Thêm người</button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="members-list">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- TAB: KHO CẦU -->
+      <div id="tab-inventory" class="tab-content">
+        <h2 class="text-xl font-semibold mb-4 text-gray-700">Quản lý Kho cầu</h2>
+        
+        <div class="bg-green-50 border border-green-200 p-4 rounded-lg mb-6 flex items-center justify-between">
+          <div>
+            <p class="text-sm text-green-800">Tổng cầu hiện tại trong kho:</p>
+            <p class="text-3xl font-bold text-green-700"><span id="inventory-total">0</span> <span class="text-lg font-normal">quả</span></p>
+            <p class="text-xs text-green-600">~ <span id="inventory-total-tubes">0</span> ống</p>
+          </div>
+          <button onclick="openAddInventoryModal()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm font-medium">
+            + Nhập cầu
+          </button>
+        </div>
+
+        <h3 class="font-medium text-gray-700 mb-2">Các đợt cầu đang dùng (FIFO)</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="py-2 px-3">Ngày nhập</th>
+                <th class="py-2 px-3">Giá ống</th>
+                <th class="py-2 px-3">Tồn (quả)</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-batches">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: LỊCH SỬ -->
+      <div id="tab-history" class="tab-content">
+        <h2 class="text-xl font-semibold mb-4 text-gray-700">Lịch sử giao dịch quỹ</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left border">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="py-2 px-3">Thời gian</th>
+                <th class="py-2 px-3">Người</th>
+                <th class="py-2 px-3">Biến động</th>
+                <th class="py-2 px-3">Nội dung</th>
+              </tr>
+            </thead>
+            <tbody id="transactions-list">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <!-- Nạp Tiền Modal -->
+  <div id="deposit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+      <h3 class="text-lg font-bold mb-4">Nạp tiền vào quỹ</h3>
+      <p class="text-sm mb-4">Nạp cho: <span id="deposit-member-name" class="font-bold text-blue-600"></span></p>
+      <input type="hidden" id="deposit-member-id">
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Số tiền (VNĐ)</label>
+        <input type="number" id="deposit-amount" class="w-full border border-gray-300 rounded p-2" placeholder="VD: 500000">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('deposit-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
+        <button onclick="submitDeposit()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thêm Thành Viên Modal -->
+  <div id="add-member-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+      <h3 class="text-lg font-bold mb-4">Thêm thành viên</h3>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Tên thành viên</label>
+        <input type="text" id="new-member-name" class="w-full border border-gray-300 rounded p-2" placeholder="Nhập tên...">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('add-member-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
+        <button onclick="submitNewMember()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nhập Kho Modal -->
+  <div id="add-inventory-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+      <h3 class="text-lg font-bold mb-4">Nhập cầu mới</h3>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Số lượng ống</label>
+        <input type="number" id="new-inventory-tubes" class="w-full border border-gray-300 rounded p-2" placeholder="VD: 5">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Giá mỗi ống (VNĐ)</label>
+        <input type="number" id="new-inventory-price" class="w-full border border-gray-300 rounded p-2" placeholder="VD: 180000">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('add-inventory-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
+        <button onclick="submitInventory()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Nhập kho</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
