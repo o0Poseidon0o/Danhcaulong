@@ -10,7 +10,10 @@
     .tab-content.active { display: block; }
     .admin-only { display: none; }
     body.admin-mode .admin-only { display: inline-flex; }
+    .admin-only-block { display: none; }
     body.admin-mode .admin-only-block { display: block; }
+    .non-admin-only { display: block; }
+    body.admin-mode .non-admin-only { display: none; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans antialiased pb-20">
@@ -29,7 +32,7 @@
 
     <!-- Navigation Tabs -->
     <div class="flex border-b overflow-x-auto">
-      <button onclick="openTab('tab-match')" id="btn-tab-match" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap admin-only">Chốt Sổ</button>
+      <button onclick="openTab('tab-match')" id="btn-tab-match" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Chốt Sổ</button>
       <button onclick="openTab('tab-members')" id="btn-tab-members" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">Thành Viên</button>
       <button onclick="openTab('tab-inventory')" id="btn-tab-inventory" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Kho Cầu</button>
       <button onclick="openTab('tab-history')" id="btn-tab-history" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Lịch Sử</button>
@@ -74,9 +77,12 @@
               <p>Tổng chi phí buổi đánh: <span id="preview-total-cost" class="font-bold text-base">0đ</span></p>
               <p>Mỗi người: <span id="preview-cost-per-person" class="font-bold text-lg text-red-600">0đ</span></p>
             </div>
-            <button onclick="submitMatch()" id="btn-submit-match" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow">
+            <button onclick="submitMatch()" id="btn-submit-match" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow admin-only-block">
               ✅ CHỐT SỔ & TRỪ TIỀN
             </button>
+            <div class="non-admin-only text-center text-sm text-red-600 font-medium mt-2 bg-white rounded p-2 border border-red-200">
+              🔒 Đăng nhập Admin để chốt sổ & trừ tiền
+            </div>
           </div>
 
           <!-- Khu vực Báo Cáo Zalo -->
