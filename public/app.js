@@ -1,4 +1,43 @@
 const API_URL = '/api';
+let adminPassword = localStorage.getItem('adminPassword') || '';
+
+function getAuthHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': adminPassword ? `Bearer ${adminPassword}` : ''
+  };
+}
+
+function checkAdminState() {
+  if (adminPassword) {
+    document.body.classList.add('admin-mode');
+    document.getElementById('btn-admin-login').classList.add('hidden');
+    document.getElementById('btn-admin-logout').classList.remove('hidden');
+  } else {
+    document.body.classList.remove('admin-mode');
+    document.getElementById('btn-admin-login').classList.remove('hidden');
+    document.getElementById('btn-admin-logout').classList.add('hidden');
+  }
+}
+
+function toggleAdminLogin() { openModal('admin-login-modal'); }
+
+function submitAdminLogin() {
+  const pwd = document.getElementById('admin-password-input').value;
+  if (!pwd) return alert('Vui lòng nhập mật khẩu');
+  adminPassword = pwd;
+  localStorage.setItem('adminPassword', adminPassword);
+  closeModal('admin-login-modal');
+  checkAdminState();
+}
+
+function logoutAdmin() {
+  adminPassword = '';
+  localStorage.removeItem('adminPassword');
+  checkAdminState();
+  // Về tab xem danh sách
+  openTab('tab-members');
+}
 
 // Tab logic
 function openTab(tabId) {
@@ -45,7 +84,12 @@ function renderMembersTab() {
   const container = document.getElementById('members-list');
   container.innerHTML = '';
   
+  let totalFund = 0;
+  let totalDebt = 0;
+
   allMembers.forEach(m => {
+    if (m.balance > 0) totalFund += m.balance;
+    if (m.balance < 0) totalDebt += Math.abs(m.balance);
     // Determine color based on balance
     let bgColor = 'bg-green-100';
     let textColor = 'text-green-800';
@@ -62,17 +106,25 @@ function renderMembersTab() {
     }
 
     container.innerHTML += `
-      <div class="${bgColor} border ${borderColor} rounded-lg p-4 flex justify-between items-center shadow-sm">
+      <div class="${bgColor} border ${borderColor} rounded-lg p-4 flex justify-between items-center shadow-sm relative group">
         <div>
           <h3 class="font-bold ${textColor}">${m.name}</h3>
           <p class="${textColor} font-medium mt-1">Quỹ: ${formatMoney(m.balance)}</p>
         </div>
-        <button onclick="openDepositModal('${m._id}', '${m.name}')" class="bg-white text-sm font-medium px-3 py-1 rounded shadow text-gray-700 hover:bg-gray-50 border border-gray-200">
-          Nạp tiền
-        </button>
+        <div class="flex gap-2">
+          <button onclick="openDepositModal('${m._id}', '${m.name}')" class="bg-white text-sm font-medium px-3 py-1 rounded shadow text-gray-700 hover:bg-gray-50 border border-gray-200 admin-only" style="display: none;">
+            Nạp tiền
+          </button>
+          <button onclick="deleteMember('${m._id}', '${m.name}')" class="bg-red-50 text-red-600 text-sm font-medium px-2 py-1 rounded shadow-sm border border-red-200 hover:bg-red-100 admin-only" style="display: none;" title="Xóa thành viên">
+            🗑️
+          </button>
+        </div>
       </div>
     `;
   });
+
+  document.getElementById('summary-total-fund').innerText = formatMoney(totalFund);
+  document.getElementById('summary-total-debt').innerText = formatMoney(totalDebt);
 }
 
 function openAddMemberModal() { openModal('add-member-modal'); }
@@ -81,14 +133,36 @@ async function submitNewMember() {
   const name = document.getElementById('new-member-name').value;
   if (!name) return alert('Vui lòng nhập tên');
   
-  await fetch(`${API_URL}/members`, {
+  const res = await fetch(`${API_URL}/members`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ name })
   });
   
+  if (!res.ok) {
+    const err = await res.json();
+    return alert('Lỗi: ' + (err.error || 'Sai mật khẩu Admin'));
+  }
+  
   closeModal('add-member-modal');
   document.getElementById('new-member-name').value = '';
+  loadMembers();
+}
+
+async function deleteMember(id, name) {
+  if (!confirm(`Bạn có chắc chắn muốn xóa thành viên "${name}" không?`)) return;
+
+  const res = await fetch(`${API_URL}/members/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    return alert('Lỗi: ' + (data.error || 'Sai mật khẩu Admin'));
+  }
+
+  alert('Đã xóa thành viên!');
   loadMembers();
 }
 
@@ -104,11 +178,16 @@ async function submitDeposit() {
   const amount = parseInt(document.getElementById('deposit-amount').value);
   if (!amount || amount <= 0) return alert('Số tiền không hợp lệ');
 
-  await fetch(`${API_URL}/members/${id}/deposit`, {
+  const res = await fetch(`${API_URL}/members/${id}/deposit`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ amount })
   });
+
+  if (!res.ok) {
+    const err = await res.json();
+    return alert('Lỗi: ' + (err.error || 'Sai mật khẩu Admin'));
+  }
 
   closeModal('deposit-modal');
   loadMembers();
@@ -148,11 +227,16 @@ async function submitInventory() {
   const price = parseInt(document.getElementById('new-inventory-price').value);
   if (!tubes || !price) return alert('Vui lòng nhập đầy đủ thông tin');
 
-  await fetch(`${API_URL}/inventory`, {
+  const res = await fetch(`${API_URL}/inventory`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ totalTubes: tubes, pricePerTube: price })
   });
+
+  if (!res.ok) {
+    const err = await res.json();
+    return alert('Lỗi: ' + (err.error || 'Sai mật khẩu Admin'));
+  }
 
   closeModal('add-inventory-modal');
   document.getElementById('new-inventory-tubes').value = '';
@@ -230,7 +314,7 @@ async function submitMatch() {
   try {
     const res = await fetch(`${API_URL}/matches`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ participantIds, courtFee, shuttlesUsed })
     });
     
@@ -310,6 +394,7 @@ async function loadTransactions() {
 
 // Init
 window.onload = () => {
+  checkAdminState();
   loadMembers();
   loadInventory();
 };

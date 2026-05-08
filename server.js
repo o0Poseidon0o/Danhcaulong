@@ -30,6 +30,19 @@ app.use(async (req, res, next) => {
   }
 });
 
+// --- MIDDLEWARE ---
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization;
+  if (!process.env.ADMIN_PASSWORD) {
+    // Nếu chưa set biến môi trường, bỏ qua check pass
+    return next();
+  }
+  if (token !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
+    return res.status(401).json({ error: 'Unauthorized: Sai mật khẩu Admin!' });
+  }
+  next();
+};
+
 // --- API ROUTES ---
 
 // 1. Members API
@@ -42,7 +55,7 @@ app.get('/api/members', async (req, res) => {
   }
 });
 
-app.post('/api/members', async (req, res) => {
+app.post('/api/members', authMiddleware, async (req, res) => {
   try {
     const member = new Member({ name: req.body.name, balance: 0 });
     await member.save();
@@ -52,8 +65,26 @@ app.post('/api/members', async (req, res) => {
   }
 });
 
+// Xóa thành viên
+app.delete('/api/members/:id', authMiddleware, async (req, res) => {
+  try {
+    const member = await Member.findById(req.params.id);
+    if (!member) return res.status(404).json({ error: 'Member not found' });
+    
+    // Kiểm tra nếu thành viên còn nợ tiền hoặc còn tiền
+    if (member.balance !== 0) {
+      return res.status(400).json({ error: 'Không thể xóa thành viên còn số dư khác 0!' });
+    }
+
+    await Member.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Đã xóa thành viên' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Nạp tiền vào quỹ
-app.post('/api/members/:id/deposit', async (req, res) => {
+app.post('/api/members/:id/deposit', authMiddleware, async (req, res) => {
   try {
     const { amount } = req.body;
     const member = await Member.findById(req.params.id);
@@ -88,7 +119,7 @@ app.get('/api/inventory', async (req, res) => {
   }
 });
 
-app.post('/api/inventory', async (req, res) => {
+app.post('/api/inventory', authMiddleware, async (req, res) => {
   try {
     const { totalTubes, pricePerTube } = req.body;
     const batch = new ShuttleBatch({
@@ -132,7 +163,7 @@ app.post('/api/matches/preview', async (req, res) => {
 });
 
 // 3. Match API (Chốt sổ)
-app.post('/api/matches', async (req, res) => {
+app.post('/api/matches', authMiddleware, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   

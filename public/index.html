@@ -8,19 +8,28 @@
   <style>
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+    .admin-only { display: none; }
+    body.admin-mode .admin-only { display: inline-flex; }
+    body.admin-mode .admin-only-block { display: block; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans antialiased pb-20">
 
   <div class="max-w-3xl mx-auto mt-8 bg-white rounded-xl shadow-lg overflow-hidden">
-    <div class="bg-blue-600 text-white p-6 text-center">
+    <div class="bg-blue-600 text-white p-6 text-center relative">
       <h1 class="text-2xl font-bold">🏸 Quản Lý Cầu Lông</h1>
       <p class="text-sm opacity-80 mt-1">Hệ thống chốt sổ, tính tiền thông minh</p>
+      <button onclick="toggleAdminLogin()" id="btn-admin-login" class="absolute top-4 right-4 bg-blue-700 hover:bg-blue-800 text-white text-xs px-3 py-1.5 rounded flex items-center gap-1 shadow-sm border border-blue-500 transition-colors">
+        🔒 Đăng nhập Admin
+      </button>
+      <button onclick="logoutAdmin()" id="btn-admin-logout" class="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded items-center gap-1 shadow-sm border border-red-500 transition-colors hidden">
+        🔓 Đăng xuất
+      </button>
     </div>
 
     <!-- Navigation Tabs -->
     <div class="flex border-b overflow-x-auto">
-      <button onclick="openTab('tab-match')" id="btn-tab-match" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">Chốt Sổ</button>
+      <button onclick="openTab('tab-match')" id="btn-tab-match" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-blue-600 border-b-2 border-blue-600 whitespace-nowrap admin-only" style="display: none;">Chốt Sổ</button>
       <button onclick="openTab('tab-members')" id="btn-tab-members" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Thành Viên</button>
       <button onclick="openTab('tab-inventory')" id="btn-tab-inventory" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Kho Cầu</button>
       <button onclick="openTab('tab-history')" id="btn-tab-history" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Lịch Sử</button>
@@ -29,7 +38,7 @@
     <div class="p-6">
       
       <!-- TAB: CHỐT SỔ -->
-      <div id="tab-match" class="tab-content active">
+      <div id="tab-match" class="tab-content admin-only-block" style="display: none;">
         <h2 class="text-xl font-semibold mb-4 text-gray-700">Tạo trận đấu mới</h2>
         
         <div class="space-y-5">
@@ -83,10 +92,22 @@
       </div>
 
       <!-- TAB: THÀNH VIÊN -->
-      <div id="tab-members" class="tab-content">
+      <div id="tab-members" class="tab-content active">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold text-gray-700">Danh sách & Quỹ</h2>
-          <button onclick="openAddMemberModal()" class="bg-gray-800 text-white px-3 py-1 text-sm rounded hover:bg-gray-700">+ Thêm người</button>
+          <button onclick="openAddMemberModal()" class="bg-gray-800 text-white px-3 py-1 text-sm rounded hover:bg-gray-700 admin-only" style="display: none;">+ Thêm người</button>
+        </div>
+        
+        <!-- Tổng kết quỹ -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+            <p class="text-xs text-blue-800 font-medium">💰 TỔNG QUỸ ĐANG CÓ</p>
+            <p class="text-xl font-bold text-blue-600" id="summary-total-fund">0đ</p>
+          </div>
+          <div class="bg-red-50 border border-red-200 p-3 rounded-lg">
+            <p class="text-xs text-red-800 font-medium">⚠️ TỔNG TIỀN BỊ NỢ</p>
+            <p class="text-xl font-bold text-red-600" id="summary-total-debt">0đ</p>
+          </div>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="members-list">
@@ -104,7 +125,7 @@
             <p class="text-3xl font-bold text-green-700"><span id="inventory-total">0</span> <span class="text-lg font-normal">quả</span></p>
             <p class="text-xs text-green-600">~ <span id="inventory-total-tubes">0</span> ống</p>
           </div>
-          <button onclick="openAddInventoryModal()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm font-medium">
+          <button onclick="openAddInventoryModal()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm font-medium admin-only" style="display: none;">
             + Nhập cầu
           </button>
         </div>
@@ -197,6 +218,22 @@
       <div class="flex justify-end gap-2">
         <button onclick="closeModal('add-inventory-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
         <button onclick="submitInventory()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Nhập kho</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div id="admin-login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+      <h3 class="text-lg font-bold mb-4">Đăng nhập Admin</h3>
+      <p class="text-sm text-gray-600 mb-4">Bạn cần nhập mật khẩu để thêm/sửa/xóa thành viên và chốt sổ.</p>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Mật khẩu</label>
+        <input type="password" id="admin-password-input" class="w-full border border-gray-300 rounded p-2" placeholder="Nhập mật khẩu...">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('admin-login-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
+        <button onclick="submitAdminLogin()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Đăng nhập</button>
       </div>
     </div>
   </div>
