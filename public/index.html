@@ -29,7 +29,7 @@
 
     <!-- Navigation Tabs -->
     <div class="flex border-b overflow-x-auto">
-      <button onclick="openTab('tab-match')" id="btn-tab-match" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap admin-only" style="display: none;">Chốt Sổ</button>
+      <button onclick="openTab('tab-match')" id="btn-tab-match" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap admin-only">Chốt Sổ</button>
       <button onclick="openTab('tab-members')" id="btn-tab-members" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">Thành Viên</button>
       <button onclick="openTab('tab-inventory')" id="btn-tab-inventory" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Kho Cầu</button>
       <button onclick="openTab('tab-history')" id="btn-tab-history" class="flex-1 py-3 px-4 text-center font-medium hover:bg-gray-50 text-gray-500 whitespace-nowrap">Lịch Sử</button>
@@ -38,7 +38,7 @@
     <div class="p-6">
       
       <!-- TAB: CHỐT SỔ -->
-      <div id="tab-match" class="tab-content admin-only-block" style="display: none;">
+      <div id="tab-match" class="tab-content admin-only-block">
         <h2 class="text-xl font-semibold mb-4 text-gray-700">Tạo trận đấu mới</h2>
         
         <div class="space-y-5">
@@ -95,7 +95,7 @@
       <div id="tab-members" class="tab-content active">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold text-gray-700">Danh sách & Quỹ</h2>
-          <button onclick="openAddMemberModal()" class="bg-gray-800 text-white px-3 py-1 text-sm rounded hover:bg-gray-700 admin-only" style="display: none;">+ Thêm người</button>
+          <button onclick="openAddMemberModal()" class="bg-gray-800 text-white px-3 py-1 text-sm rounded hover:bg-gray-700 admin-only">+ Thêm người</button>
         </div>
         
         <!-- Tổng kết quỹ -->
@@ -125,7 +125,7 @@
             <p class="text-3xl font-bold text-green-700"><span id="inventory-total">0</span> <span class="text-lg font-normal">quả</span></p>
             <p class="text-xs text-green-600">~ <span id="inventory-total-tubes">0</span> ống</p>
           </div>
-          <button onclick="openAddInventoryModal()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm font-medium admin-only" style="display: none;">
+          <button onclick="openAddInventoryModal()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 text-sm font-medium admin-only">
             + Nhập cầu
           </button>
         </div>

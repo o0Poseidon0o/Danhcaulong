@@ -112,10 +112,10 @@ function renderMembersTab() {
           <p class="${textColor} font-medium mt-1">Quỹ: ${formatMoney(m.balance)}</p>
         </div>
         <div class="flex gap-2">
-          <button onclick="openDepositModal('${m._id}', '${m.name}')" class="bg-white text-sm font-medium px-3 py-1 rounded shadow text-gray-700 hover:bg-gray-50 border border-gray-200 admin-only" style="display: none;">
+          <button onclick="openDepositModal('${m._id}', '${m.name}')" class="bg-white text-sm font-medium px-3 py-1 rounded shadow text-gray-700 hover:bg-gray-50 border border-gray-200 admin-only">
             Nạp tiền
           </button>
-          <button onclick="deleteMember('${m._id}', '${m.name}')" class="bg-red-50 text-red-600 text-sm font-medium px-2 py-1 rounded shadow-sm border border-red-200 hover:bg-red-100 admin-only" style="display: none;" title="Xóa thành viên">
+          <button onclick="deleteMember('${m._id}', '${m.name}')" class="bg-red-50 text-red-600 text-sm font-medium px-2 py-1 rounded shadow-sm border border-red-200 hover:bg-red-100 admin-only" title="Xóa thành viên">
             🗑️
           </button>
         </div>
