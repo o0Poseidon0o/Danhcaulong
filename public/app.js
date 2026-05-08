@@ -29,6 +29,7 @@ function submitAdminLogin() {
   localStorage.setItem('adminPassword', adminPassword);
   closeModal('admin-login-modal');
   checkAdminState();
+  openTab('tab-match');
 }
 
 function logoutAdmin() {
