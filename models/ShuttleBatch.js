@@ -4,7 +4,8 @@ const shuttleBatchSchema = new mongoose.Schema({
   importDate: { type: Date, default: Date.now },
   totalTubes: { type: Number, required: true },
   pricePerTube: { type: Number, required: true },
-  totalShuttles: { type: Number, required: true }, // totalTubes * 12
+  shuttlesPerTube: { type: Number, default: 12 },
+  totalShuttles: { type: Number, required: true }, // totalTubes * shuttlesPerTube
   remainingShuttles: { type: Number, required: true }, // initially totalShuttles
 });
 

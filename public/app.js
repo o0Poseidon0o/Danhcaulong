@@ -203,16 +203,25 @@ async function loadInventory() {
     
     document.getElementById('inventory-total').innerText = data.totalShuttles;
     document.getElementById('preview-inventory').innerText = data.totalShuttles;
-    document.getElementById('inventory-total-tubes').innerText = (data.totalShuttles / 12).toFixed(1);
+
+    let totalRemainingTubes = 0;
+    data.batches.forEach(b => {
+      const perTube = b.shuttlesPerTube || 12;
+      totalRemainingTubes += b.remainingShuttles / perTube;
+    });
+    document.getElementById('inventory-total-tubes').innerText = totalRemainingTubes.toFixed(1);
 
     const tbody = document.getElementById('inventory-batches');
     tbody.innerHTML = '';
     data.batches.forEach(b => {
+      const perTube = b.shuttlesPerTube || 12;
+      const tubesLeft = (b.remainingShuttles / perTube).toFixed(1);
       tbody.innerHTML += `
         <tr class="border-b">
           <td class="py-2 px-3">${new Date(b.importDate).toLocaleDateString('vi-VN')}</td>
+          <td class="py-2 px-3">${perTube} quả/ống</td>
           <td class="py-2 px-3">${formatMoney(b.pricePerTube)}</td>
-          <td class="py-2 px-3 font-medium">${b.remainingShuttles} quả</td>
+          <td class="py-2 px-3 font-medium">${b.remainingShuttles} quả (${tubesLeft} ống)</td>
         </tr>
       `;
     });
@@ -225,13 +234,14 @@ function openAddInventoryModal() { openModal('add-inventory-modal'); }
 
 async function submitInventory() {
   const tubes = parseInt(document.getElementById('new-inventory-tubes').value);
+  const shuttlesPerTube = parseInt(document.getElementById('new-inventory-shuttles-per-tube').value) || 12;
   const price = parseInt(document.getElementById('new-inventory-price').value);
   if (!tubes || !price) return alert('Vui lòng nhập đầy đủ thông tin');
 
   const res = await fetch(`${API_URL}/inventory`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ totalTubes: tubes, pricePerTube: price })
+    body: JSON.stringify({ totalTubes: tubes, pricePerTube: price, shuttlesPerTube })
   });
 
   if (!res.ok) {
@@ -241,6 +251,7 @@ async function submitInventory() {
 
   closeModal('add-inventory-modal');
   document.getElementById('new-inventory-tubes').value = '';
+  document.getElementById('new-inventory-shuttles-per-tube').value = '12';
   document.getElementById('new-inventory-price').value = '';
   loadInventory();
   alert('Nhập kho thành công!');

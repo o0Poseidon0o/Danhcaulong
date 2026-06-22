@@ -121,12 +121,14 @@ app.get('/api/inventory', async (req, res) => {
 
 app.post('/api/inventory', authMiddleware, async (req, res) => {
   try {
-    const { totalTubes, pricePerTube } = req.body;
+    const { totalTubes, pricePerTube, shuttlesPerTube } = req.body;
+    const countPerTube = shuttlesPerTube || 12;
     const batch = new ShuttleBatch({
       totalTubes,
       pricePerTube,
-      totalShuttles: totalTubes * 12,
-      remainingShuttles: totalTubes * 12
+      shuttlesPerTube: countPerTube,
+      totalShuttles: totalTubes * countPerTube,
+      remainingShuttles: totalTubes * countPerTube
     });
     await batch.save();
     res.status(201).json(batch);
@@ -146,7 +148,8 @@ app.post('/api/matches/preview', async (req, res) => {
 
     for (let batch of batches) {
       if (shuttlesToDeduct <= 0) break;
-      const pricePerShuttle = batch.pricePerTube / 12;
+      const countPerTube = batch.shuttlesPerTube || 12;
+      const pricePerShuttle = batch.pricePerTube / countPerTube;
       const deductFromThisBatch = Math.min(batch.remainingShuttles, shuttlesToDeduct);
       totalShuttleCost += deductFromThisBatch * pricePerShuttle;
       shuttlesToDeduct -= deductFromThisBatch;
@@ -181,7 +184,8 @@ app.post('/api/matches', authMiddleware, async (req, res) => {
 
     for (let batch of batches) {
       if (shuttlesToDeduct <= 0) break;
-      const pricePerShuttle = batch.pricePerTube / 12;
+      const countPerTube = batch.shuttlesPerTube || 12;
+      const pricePerShuttle = batch.pricePerTube / countPerTube;
       const deductFromThisBatch = Math.min(batch.remainingShuttles, shuttlesToDeduct);
       
       totalShuttleCost += deductFromThisBatch * pricePerShuttle;
