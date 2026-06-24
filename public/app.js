@@ -196,11 +196,15 @@ async function submitDeposit() {
 }
 
 // ================= INVENTORY =================
+let inventoryBatches = [];
+
 async function loadInventory() {
   try {
     const res = await fetch(`${API_URL}/inventory`);
     const data = await res.json();
     
+    inventoryBatches = data.batches;
+
     document.getElementById('inventory-total').innerText = data.totalShuttles;
     document.getElementById('preview-inventory').innerText = data.totalShuttles;
 
@@ -217,11 +221,15 @@ async function loadInventory() {
       const perTube = b.shuttlesPerTube || 12;
       const tubesLeft = (b.remainingShuttles / perTube).toFixed(1);
       tbody.innerHTML += `
-        <tr class="border-b">
+        <tr class="border-b hover:bg-gray-50">
           <td class="py-2 px-3">${new Date(b.importDate).toLocaleDateString('vi-VN')}</td>
           <td class="py-2 px-3">${perTube} quả/ống</td>
           <td class="py-2 px-3">${formatMoney(b.pricePerTube)}</td>
           <td class="py-2 px-3 font-medium">${b.remainingShuttles} quả (${tubesLeft} ống)</td>
+          <td class="py-2 px-3 text-right admin-only-cell">
+            <button onclick="openEditInventoryModal('${b._id}')" class="text-blue-600 hover:text-blue-800 font-medium text-sm mr-3">Sửa</button>
+            <button onclick="deleteInventory('${b._id}')" class="text-red-600 hover:text-red-800 font-medium text-sm">Xóa</button>
+          </td>
         </tr>
       `;
     });
@@ -255,6 +263,75 @@ async function submitInventory() {
   document.getElementById('new-inventory-price').value = '';
   loadInventory();
   alert('Nhập kho thành công!');
+}
+
+function openEditInventoryModal(id) {
+  const batch = inventoryBatches.find(b => b._id === id);
+  if (!batch) return;
+
+  document.getElementById('edit-inventory-id').value = batch._id;
+  
+  const d = new Date(batch.importDate);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  document.getElementById('edit-inventory-date').value = `${year}-${month}-${day}`;
+
+  document.getElementById('edit-inventory-tubes').value = batch.totalTubes;
+  document.getElementById('edit-inventory-shuttles-per-tube').value = batch.shuttlesPerTube || 12;
+  document.getElementById('edit-inventory-price').value = batch.pricePerTube;
+  document.getElementById('edit-inventory-remaining').value = batch.remainingShuttles;
+
+  openModal('edit-inventory-modal');
+}
+
+async function submitEditInventory() {
+  const id = document.getElementById('edit-inventory-id').value;
+  const importDate = document.getElementById('edit-inventory-date').value;
+  const tubes = parseInt(document.getElementById('edit-inventory-tubes').value);
+  const shuttlesPerTube = parseInt(document.getElementById('edit-inventory-shuttles-per-tube').value) || 12;
+  const price = parseInt(document.getElementById('edit-inventory-price').value);
+  const remainingShuttles = parseInt(document.getElementById('edit-inventory-remaining').value);
+
+  if (!tubes || !price || isNaN(remainingShuttles)) return alert('Vui lòng nhập đầy đủ thông tin');
+
+  const res = await fetch(`${API_URL}/inventory/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ 
+      totalTubes: tubes, 
+      pricePerTube: price, 
+      shuttlesPerTube, 
+      remainingShuttles,
+      importDate: importDate ? new Date(importDate).toISOString() : undefined
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    return alert('Lỗi: ' + (err.error || 'Sai mật khẩu Admin'));
+  }
+
+  closeModal('edit-inventory-modal');
+  loadInventory();
+  alert('Cập nhật thành công!');
+}
+
+async function deleteInventory(id) {
+  if (!confirm('Bạn có chắc chắn muốn xóa lô cầu này?')) return;
+
+  const res = await fetch(`${API_URL}/inventory/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    return alert('Lỗi: ' + (err.error || 'Sai mật khẩu Admin'));
+  }
+
+  loadInventory();
+  alert('Đã xóa lô cầu!');
 }
 
 // ================= MATCH =================

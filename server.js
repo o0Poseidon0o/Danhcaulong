@@ -137,6 +137,39 @@ app.post('/api/inventory', authMiddleware, async (req, res) => {
   }
 });
 
+// Cập nhật lô cầu
+app.put('/api/inventory/:id', authMiddleware, async (req, res) => {
+  try {
+    const { totalTubes, pricePerTube, shuttlesPerTube, remainingShuttles, importDate } = req.body;
+    const batch = await ShuttleBatch.findById(req.params.id);
+    if (!batch) return res.status(404).json({ error: 'Không tìm thấy lô cầu' });
+
+    const countPerTube = shuttlesPerTube || 12;
+    batch.totalTubes = totalTubes;
+    batch.pricePerTube = pricePerTube;
+    batch.shuttlesPerTube = countPerTube;
+    batch.totalShuttles = totalTubes * countPerTube;
+    batch.remainingShuttles = remainingShuttles;
+    if (importDate) batch.importDate = importDate;
+
+    await batch.save();
+    res.json(batch);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Xóa lô cầu
+app.delete('/api/inventory/:id', authMiddleware, async (req, res) => {
+  try {
+    const batch = await ShuttleBatch.findByIdAndDelete(req.params.id);
+    if (!batch) return res.status(404).json({ error: 'Không tìm thấy lô cầu' });
+    res.json({ message: 'Đã xóa lô cầu' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Tính toán nháp giá tiền cầu trước khi chốt
 app.post('/api/matches/preview', async (req, res) => {
   try {

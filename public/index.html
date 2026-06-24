@@ -14,6 +14,8 @@
     body.admin-mode .admin-only-block { display: block; }
     .non-admin-only { display: block; }
     body.admin-mode .non-admin-only { display: none; }
+    .admin-only-cell { display: none; }
+    body.admin-mode .admin-only-cell { display: table-cell; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans antialiased pb-20">
@@ -145,6 +147,7 @@
                 <th class="py-2 px-3">Quy cách</th>
                 <th class="py-2 px-3">Giá ống</th>
                 <th class="py-2 px-3">Tồn (quả)</th>
+                <th class="py-2 px-3 text-right admin-only-cell">Thao tác</th>
               </tr>
             </thead>
             <tbody id="inventory-batches">
@@ -229,6 +232,38 @@
       <div class="flex justify-end gap-2">
         <button onclick="closeModal('add-inventory-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
         <button onclick="submitInventory()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Nhập kho</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sửa Kho Modal -->
+  <div id="edit-inventory-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+      <h3 class="text-lg font-bold mb-4">Sửa lô cầu</h3>
+      <input type="hidden" id="edit-inventory-id">
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Ngày nhập</label>
+        <input type="date" id="edit-inventory-date" class="w-full border border-gray-300 rounded p-2">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Số lượng ống</label>
+        <input type="number" id="edit-inventory-tubes" class="w-full border border-gray-300 rounded p-2" placeholder="VD: 5">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Số quả cầu mỗi ống</label>
+        <input type="number" id="edit-inventory-shuttles-per-tube" class="w-full border border-gray-300 rounded p-2" placeholder="Mặc định: 12">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Giá mỗi ống (VNĐ)</label>
+        <input type="number" id="edit-inventory-price" class="w-full border border-gray-300 rounded p-2" placeholder="VD: 180000">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Tồn (quả)</label>
+        <input type="number" id="edit-inventory-remaining" class="w-full border border-gray-300 rounded p-2">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('edit-inventory-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
+        <button onclick="submitEditInventory()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Lưu thay đổi</button>
       </div>
     </div>
   </div>
