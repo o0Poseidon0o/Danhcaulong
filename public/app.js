@@ -63,6 +63,22 @@ function openTab(tabId) {
 const formatMoney = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 const formatDate = (dateString) => new Date(dateString).toLocaleString('vi-VN');
 
+function formatInputCurrency(input) {
+  let val = input.value.replace(/\D/g, '');
+  if (val === '') {
+    input.value = '';
+    return;
+  }
+  input.value = new Intl.NumberFormat('vi-VN').format(val);
+}
+
+function addDepositAmount(amount) {
+  const input = document.getElementById('deposit-amount');
+  let current = parseInt(input.value.replace(/\D/g, '')) || 0;
+  current += amount;
+  input.value = new Intl.NumberFormat('vi-VN').format(current);
+}
+
 // Modals
 function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
@@ -198,7 +214,14 @@ async function deleteMember(id, name) {
 function openDepositModal(id, name, amount = '') {
   document.getElementById('deposit-member-id').value = id;
   document.getElementById('deposit-member-name').innerText = name;
-  document.getElementById('deposit-amount').value = amount;
+  
+  const input = document.getElementById('deposit-amount');
+  if (amount) {
+    input.value = new Intl.NumberFormat('vi-VN').format(amount);
+  } else {
+    input.value = '';
+  }
+  
   openModal('deposit-modal');
 }
 
@@ -223,8 +246,13 @@ function copyDebtReminder() {
 
 async function submitDeposit() {
   const id = document.getElementById('deposit-member-id').value;
-  const amount = parseInt(document.getElementById('deposit-amount').value);
+  const rawValue = document.getElementById('deposit-amount').value.replace(/\D/g, '');
+  const amount = parseInt(rawValue);
   if (!amount || amount <= 0) return alert('Số tiền không hợp lệ');
+
+  // Confirmation to ensure safety
+  const memberName = document.getElementById('deposit-member-name').innerText;
+  if (!confirm(`Xác nhận nạp ${formatMoney(amount)} cho thành viên ${memberName}?`)) return;
 
   const res = await fetch(`${API_URL}/members/${id}/deposit`, {
     method: 'POST',
@@ -292,7 +320,8 @@ async function submitInventory() {
   const brand = document.getElementById('new-inventory-brand').value;
   const tubes = parseInt(document.getElementById('new-inventory-tubes').value);
   const shuttlesPerTube = parseInt(document.getElementById('new-inventory-shuttles-per-tube').value) || 12;
-  const price = parseInt(document.getElementById('new-inventory-price').value);
+  const priceRaw = document.getElementById('new-inventory-price').value.replace(/\D/g, '');
+  const price = parseInt(priceRaw);
   if (!tubes || !price) return alert('Vui lòng nhập đầy đủ thông tin');
 
   const res = await fetch(`${API_URL}/inventory`, {
@@ -342,7 +371,8 @@ async function submitEditInventory() {
   const brand = document.getElementById('edit-inventory-brand').value;
   const tubes = parseInt(document.getElementById('edit-inventory-tubes').value);
   const shuttlesPerTube = parseInt(document.getElementById('edit-inventory-shuttles-per-tube').value) || 12;
-  const price = parseInt(document.getElementById('edit-inventory-price').value);
+  const priceRaw = document.getElementById('edit-inventory-price').value.replace(/\D/g, '');
+  const price = parseInt(priceRaw);
   const remainingShuttles = parseInt(document.getElementById('edit-inventory-remaining').value);
 
   if (!tubes || !price || isNaN(remainingShuttles)) return alert('Vui lòng nhập đầy đủ thông tin');
@@ -408,7 +438,8 @@ function updateAttendanceCount() {
 
 async function calculatePreview() {
   const shuttlesUsed = parseInt(document.getElementById('shuttles-used').value) || 0;
-  const courtFee = parseInt(document.getElementById('court-fee').value) || 0;
+  const courtFeeRaw = document.getElementById('court-fee').value.replace(/\D/g, '');
+  const courtFee = parseInt(courtFeeRaw) || 0;
   const participantsCount = document.querySelectorAll('.attendance-cb:checked').length;
 
   if (shuttlesUsed > 0) {
@@ -443,7 +474,8 @@ async function submitMatch() {
   const participantIds = Array.from(cbs).map(cb => cb.value);
   const participantNames = Array.from(cbs).map(cb => cb.dataset.name);
   
-  const courtFee = parseInt(document.getElementById('court-fee').value);
+  const courtFeeRaw = document.getElementById('court-fee').value.replace(/\D/g, '');
+  const courtFee = parseInt(courtFeeRaw);
   const shuttlesUsed = parseInt(document.getElementById('shuttles-used').value);
 
   if (participantIds.length === 0) return alert('Vui lòng chọn người đi đánh!');
@@ -526,11 +558,75 @@ async function loadTransactions() {
           <td class="py-2 px-3 font-medium text-gray-800">${t.member ? t.member.name : '?'}</td>
           <td class="py-2 px-3 font-bold ${amountClass}">${amountSign}${formatMoney(t.amount)}</td>
           <td class="py-2 px-3 text-sm text-gray-600">${t.description}</td>
+          <td class="py-2 px-3 text-right admin-only-cell">
+            ${t.type === 'DEPOSIT' ? `
+              <button onclick="openEditTransactionModal('${t._id}', '${t.member ? t.member.name : '?'}', ${t.amount}, '${t.description}')" class="text-blue-600 hover:text-blue-800 font-medium text-sm mr-3">Sửa</button>
+              <button onclick="deleteTransaction('${t._id}')" class="text-red-600 hover:text-red-800 font-medium text-sm">Xóa</button>
+            ` : ''}
+          </td>
         </tr>
       `;
     });
   } catch (err) {
     console.error(err);
+  }
+}
+
+function openEditTransactionModal(id, memberName, currentAmount, description) {
+  document.getElementById('edit-tx-id').value = id;
+  document.getElementById('edit-tx-member-name').innerText = memberName;
+  const input = document.getElementById('edit-tx-amount');
+  input.value = new Intl.NumberFormat('vi-VN').format(currentAmount);
+  document.getElementById('edit-tx-description').value = description;
+  openModal('edit-transaction-modal');
+}
+
+async function submitEditTransaction() {
+  const id = document.getElementById('edit-tx-id').value;
+  const rawValue = document.getElementById('edit-tx-amount').value.replace(/\D/g, '');
+  const amount = parseInt(rawValue);
+  const description = document.getElementById('edit-tx-description').value;
+
+  if (!amount || amount <= 0) return alert('Số tiền không hợp lệ');
+
+  if (!confirm(`Bạn chắc chắn muốn sửa thành ${formatMoney(amount)} không? Quỹ sẽ tự động bù trừ phần chênh lệch.`)) return;
+
+  try {
+    const res = await fetch(`${API_URL}/transactions/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ amount, description })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Lỗi hệ thống');
+    }
+    closeModal('edit-transaction-modal');
+    loadTransactions();
+    loadMembers(); // Cập nhật lại quỹ bên tab thành viên
+    alert('Sửa giao dịch thành công!');
+  } catch (err) {
+    alert('Lỗi: ' + err.message);
+  }
+}
+
+async function deleteTransaction(id) {
+  if (!confirm('Bạn có chắc chắn muốn xóa giao dịch này? Số tiền đã nạp sẽ bị trừ lại khỏi quỹ của người đó.')) return;
+  
+  try {
+    const res = await fetch(`${API_URL}/transactions/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Lỗi hệ thống');
+    }
+    loadTransactions();
+    loadMembers(); // Cập nhật lại quỹ
+    alert('Xóa giao dịch thành công!');
+  } catch (err) {
+    alert('Lỗi: ' + err.message);
   }
 }
 

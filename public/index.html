@@ -61,7 +61,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm text-gray-600 mb-1">Tiền sân (VNĐ)</label>
-                <input type="number" id="court-fee" class="w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="VD: 200000" oninput="calculatePreview()">
+                <input type="text" id="court-fee" class="w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-blue-700" placeholder="VD: 200,000" oninput="formatInputCurrency(this); calculatePreview()">
               </div>
               <div>
                 <label class="block text-sm text-gray-600 mb-1">Số quả cầu đã dùng</label>
@@ -183,6 +183,7 @@
                 <th class="py-2 px-3">Người</th>
                 <th class="py-2 px-3">Biến động</th>
                 <th class="py-2 px-3">Nội dung</th>
+                <th class="py-2 px-3 text-right admin-only-cell">Thao tác</th>
               </tr>
             </thead>
             <tbody id="transactions-list">
@@ -204,7 +205,13 @@
       <input type="hidden" id="deposit-member-id">
       <div class="mb-4">
         <label class="block text-sm text-gray-600 mb-1">Số tiền (VNĐ)</label>
-        <input type="number" id="deposit-amount" class="w-full border border-gray-300 rounded p-2" placeholder="VD: 500000">
+        <input type="text" id="deposit-amount" class="w-full border border-gray-300 rounded p-2 text-lg font-bold text-blue-700" placeholder="VD: 500,000" oninput="formatInputCurrency(this)">
+        <div class="flex gap-2 mt-2">
+          <button onclick="addDepositAmount(50000)" class="flex-1 text-xs bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded py-1">+50k</button>
+          <button onclick="addDepositAmount(100000)" class="flex-1 text-xs bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded py-1">+100k</button>
+          <button onclick="addDepositAmount(200000)" class="flex-1 text-xs bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded py-1">+200k</button>
+          <button onclick="addDepositAmount(500000)" class="flex-1 text-xs bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded py-1">+500k</button>
+        </div>
       </div>
       <div class="flex justify-end gap-2">
         <button onclick="closeModal('deposit-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
@@ -246,7 +253,7 @@
       </div>
       <div class="mb-4">
         <label class="block text-sm text-gray-600 mb-1">Giá mỗi ống (VNĐ)</label>
-        <input type="number" id="new-inventory-price" class="w-full border border-gray-300 rounded p-2" placeholder="VD: 180000">
+        <input type="text" id="new-inventory-price" class="w-full border border-gray-300 rounded p-2 font-bold text-blue-700" placeholder="VD: 180,000" oninput="formatInputCurrency(this)">
       </div>
       <div class="flex justify-end gap-2">
         <button onclick="closeModal('add-inventory-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
@@ -278,7 +285,7 @@
       </div>
       <div class="mb-4">
         <label class="block text-sm text-gray-600 mb-1">Giá mỗi ống (VNĐ)</label>
-        <input type="number" id="edit-inventory-price" class="w-full border border-gray-300 rounded p-2" placeholder="VD: 180000">
+        <input type="text" id="edit-inventory-price" class="w-full border border-gray-300 rounded p-2 font-bold text-blue-700" placeholder="VD: 180,000" oninput="formatInputCurrency(this)">
       </div>
       <div class="mb-4">
         <label class="block text-sm text-gray-600 mb-1">Tồn (quả)</label>
@@ -287,6 +294,27 @@
       <div class="flex justify-end gap-2">
         <button onclick="closeModal('edit-inventory-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
         <button onclick="submitEditInventory()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Lưu thay đổi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sửa Giao Dịch Modal -->
+  <div id="edit-transaction-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+      <h3 class="text-lg font-bold mb-4">Sửa giao dịch nạp quỹ</h3>
+      <p class="text-sm mb-4">Giao dịch của: <span id="edit-tx-member-name" class="font-bold text-blue-600"></span></p>
+      <input type="hidden" id="edit-tx-id">
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Số tiền đúng (VNĐ)</label>
+        <input type="text" id="edit-tx-amount" class="w-full border border-gray-300 rounded p-2 text-lg font-bold text-blue-700" oninput="formatInputCurrency(this)">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Nội dung ghi chú</label>
+        <input type="text" id="edit-tx-description" class="w-full border border-gray-300 rounded p-2">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('edit-transaction-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
+        <button onclick="submitEditTransaction()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Lưu thay đổi</button>
       </div>
     </div>
   </div>

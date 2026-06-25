@@ -290,6 +290,69 @@ app.get('/api/transactions', async (req, res) => {
   }
 });
 
+app.put('/api/transactions/:id', authMiddleware, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { amount, description } = req.body;
+    const tx = await Transaction.findById(req.params.id).session(session);
+    if (!tx) throw new Error('Không tìm thấy giao dịch');
+    
+    if (tx.type !== 'DEPOSIT') {
+      throw new Error('Chỉ có thể sửa các giao dịch Nạp quỹ/Thu nợ.');
+    }
+
+    const diff = amount - tx.amount;
+    
+    const member = await Member.findById(tx.member).session(session);
+    if (member) {
+      member.balance += diff;
+      await member.save({ session });
+    }
+
+    tx.amount = amount;
+    tx.description = description || `Cập nhật giao dịch: +${amount.toLocaleString('vi-VN')}đ`;
+    await tx.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+    res.json(tx);
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/transactions/:id', authMiddleware, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const tx = await Transaction.findById(req.params.id).session(session);
+    if (!tx) throw new Error('Không tìm thấy giao dịch');
+    
+    if (tx.type !== 'DEPOSIT') {
+      throw new Error('Chỉ có thể xóa các giao dịch Nạp quỹ/Thu nợ.');
+    }
+
+    const member = await Member.findById(tx.member).session(session);
+    if (member) {
+      member.balance -= tx.amount;
+      await member.save({ session });
+    }
+
+    await Transaction.findByIdAndDelete(tx._id).session(session);
+
+    await session.commitTransaction();
+    session.endSession();
+    res.json({ message: 'Đã xóa giao dịch và hoàn quỹ' });
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Fallback to index.html for SPA
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
