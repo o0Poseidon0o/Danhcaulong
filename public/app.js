@@ -340,12 +340,32 @@ function renderAttendanceList() {
   container.innerHTML = '';
   allMembers.forEach(m => {
     container.innerHTML += `
-      <label class="flex items-center space-x-2 bg-white p-2 rounded border border-gray-200 cursor-pointer hover:bg-blue-50">
-        <input type="checkbox" value="${m._id}" data-name="${m.name}" class="attendance-cb w-4 h-4 text-blue-600 rounded" onchange="updateAttendanceCount(); calculatePreview();">
-        <span class="text-sm font-medium text-gray-700">${m.name}</span>
-      </label>
+      <div class="flex items-center justify-between bg-white p-2 rounded border border-gray-200 hover:bg-blue-50">
+        <label class="flex items-center space-x-2 cursor-pointer flex-1">
+          <input type="checkbox" value="${m._id}" data-name="${m.name}" class="attendance-cb w-4 h-4 text-blue-600 rounded" onchange="updateAttendanceCount(); calculatePreview(); toggleCashCheckbox('${m._id}')">
+          <span class="text-sm font-medium text-gray-700">${m.name}</span>
+        </label>
+        <label id="cash-label-${m._id}" class="hidden items-center space-x-1 cursor-pointer ml-2 text-xs text-green-600 border border-green-200 bg-green-50 px-1.5 py-0.5 rounded transition-all">
+          <input type="checkbox" value="${m._id}" class="cash-cb w-3 h-3 text-green-600 rounded">
+          <span class="whitespace-nowrap">Tiền mặt</span>
+        </label>
+      </div>
     `;
   });
+}
+
+function toggleCashCheckbox(id) {
+  const cb = document.querySelector(`.attendance-cb[value="${id}"]`);
+  const cashLabel = document.getElementById(`cash-label-${id}`);
+  const cashCb = cashLabel.querySelector('.cash-cb');
+  if (cb.checked) {
+    cashLabel.classList.remove('hidden');
+    cashLabel.classList.add('flex');
+  } else {
+    cashLabel.classList.add('hidden');
+    cashLabel.classList.remove('flex');
+    cashCb.checked = false;
+  }
 }
 
 function updateAttendanceCount() {
@@ -390,6 +410,10 @@ async function submitMatch() {
   const participantIds = Array.from(cbs).map(cb => cb.value);
   const participantNames = Array.from(cbs).map(cb => cb.dataset.name);
   
+  const cashCbs = document.querySelectorAll('.cash-cb:checked');
+  const payDirectlyIds = Array.from(cashCbs).map(cb => cb.value);
+  const cashNames = Array.from(cashCbs).map(cb => cb.closest('.flex').querySelector('.attendance-cb').dataset.name);
+  
   const courtFee = parseInt(document.getElementById('court-fee').value);
   const shuttlesUsed = parseInt(document.getElementById('shuttles-used').value);
 
@@ -404,14 +428,14 @@ async function submitMatch() {
     const res = await fetch(`${API_URL}/matches`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ participantIds, courtFee, shuttlesUsed })
+      body: JSON.stringify({ participantIds, courtFee, shuttlesUsed, payDirectlyIds })
     });
     
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
 
     // Xử lý báo cáo Zalo
-    generateZaloReport(data, participantNames);
+    generateZaloReport(data, participantNames, cashNames);
     
     // Reset form
     document.getElementById('court-fee').value = '';
@@ -432,16 +456,20 @@ async function submitMatch() {
   }
 }
 
-function generateZaloReport(matchData, participantNames) {
+function generateZaloReport(matchData, participantNames, cashNames) {
   const dateStr = new Date(matchData.date).toLocaleDateString('vi-VN');
   const names = participantNames.join(', ');
   
-  const text = `🏸 Báo cáo sân ngày ${dateStr}:
+  let text = `🏸 Báo cáo sân ngày ${dateStr}:
 Tổng người: ${participantNames.length} (${names})
 Tiền sân: ${formatMoney(matchData.courtFee)}
 Tiền cầu: ${formatMoney(matchData.totalShuttleCost)} (${matchData.shuttlesUsed} quả)
 ➡️ Tổng chi: ${formatMoney(matchData.totalCost)} -> Mỗi người ${formatMoney(matchData.costPerPerson)}.
 💰 Đã trừ trực tiếp vào quỹ của anh em nhé! Ai màu đỏ nhớ nạp thêm!`;
+
+  if (cashNames && cashNames.length > 0) {
+    text += `\n💵 Đã thu tiền mặt tại sân: ${cashNames.join(', ')}`;
+  }
 
   document.getElementById('zalo-report-text').value = text;
   document.getElementById('zalo-report-section').classList.remove('hidden');

@@ -204,7 +204,7 @@ app.post('/api/matches', authMiddleware, async (req, res) => {
   session.startTransaction();
   
   try {
-    const { participantIds, courtFee, shuttlesUsed } = req.body;
+    const { participantIds, courtFee, shuttlesUsed, payDirectlyIds } = req.body;
     
     if (!participantIds || participantIds.length === 0) {
       throw new Error("Phải chọn ít nhất 1 người tham gia.");
@@ -262,6 +262,21 @@ app.post('/api/matches', authMiddleware, async (req, res) => {
           matchId: match._id
         });
         await tx.save({ session });
+
+        // Nếu trả tiền mặt trực tiếp
+        if (payDirectlyIds && payDirectlyIds.includes(memberId)) {
+          member.balance += costPerPerson;
+          await member.save({ session });
+
+          const depositTx = new Transaction({
+            member: memberId,
+            type: 'DEPOSIT',
+            amount: costPerPerson,
+            description: `Thu tiền mặt tại sân ngày ${new Date().toLocaleDateString('vi-VN')} (+${costPerPerson.toLocaleString('vi-VN')}đ)`,
+            matchId: match._id
+          });
+          await depositTx.save({ session });
+        }
       }
     }
 
