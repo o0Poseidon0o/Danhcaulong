@@ -82,50 +82,78 @@ async function loadMembers() {
 }
 
 function renderMembersTab() {
-  const container = document.getElementById('members-list');
-  container.innerHTML = '';
+  const debtContainer = document.getElementById('members-debt-list');
+  const fundContainer = document.getElementById('members-fund-list');
+  
+  if(debtContainer) debtContainer.innerHTML = '';
+  if(fundContainer) fundContainer.innerHTML = '';
   
   let totalFund = 0;
   let totalDebt = 0;
+  let hasDebt = false;
 
   allMembers.forEach(m => {
     if (m.balance > 0) totalFund += m.balance;
-    if (m.balance < 0) totalDebt += Math.abs(m.balance);
+    if (m.balance < 0) {
+      totalDebt += Math.abs(m.balance);
+      hasDebt = true;
+    }
+    
     // Determine color based on balance
     let bgColor = 'bg-green-100';
     let textColor = 'text-green-800';
     let borderColor = 'border-green-300';
     
-    if (m.balance <= 0) {
-      bgColor = 'bg-red-100';
+    if (m.balance < 0) {
+      bgColor = 'bg-red-50';
       textColor = 'text-red-800';
       borderColor = 'border-red-300';
+    } else if (m.balance === 0) {
+      bgColor = 'bg-gray-50';
+      textColor = 'text-gray-800';
+      borderColor = 'border-gray-300';
     } else if (m.balance < 50000) {
-      bgColor = 'bg-yellow-100';
+      bgColor = 'bg-yellow-50';
       textColor = 'text-yellow-800';
       borderColor = 'border-yellow-300';
     }
 
-    container.innerHTML += `
+    const cardHTML = `
       <div class="${bgColor} border ${borderColor} rounded-lg p-4 flex justify-between items-center shadow-sm relative group">
         <div>
           <h3 class="font-bold ${textColor}">${m.name}</h3>
           <p class="${textColor} font-medium mt-1">Quỹ: ${formatMoney(m.balance)}</p>
         </div>
         <div class="flex gap-2">
-          <button onclick="openDepositModal('${m._id}', '${m.name}')" class="bg-white text-sm font-medium px-3 py-1 rounded shadow text-gray-700 hover:bg-gray-50 border border-gray-200 admin-only">
-            Nạp tiền
-          </button>
+          ${m.balance < 0 ? 
+            `<button onclick="openDepositModal('${m._id}', '${m.name}', ${Math.abs(m.balance)})" class="bg-red-600 text-white text-sm font-medium px-3 py-1 rounded shadow hover:bg-red-700 admin-only">Thu nợ</button>` : 
+            `<button onclick="openDepositModal('${m._id}', '${m.name}')" class="bg-white text-sm font-medium px-3 py-1 rounded shadow text-gray-700 hover:bg-gray-50 border border-gray-200 admin-only">Nạp tiền</button>`
+          }
           <button onclick="deleteMember('${m._id}', '${m.name}')" class="bg-red-50 text-red-600 text-sm font-medium px-2 py-1 rounded shadow-sm border border-red-200 hover:bg-red-100 admin-only" title="Xóa thành viên">
             🗑️
           </button>
         </div>
       </div>
     `;
+
+    if (m.balance < 0 && debtContainer) {
+      debtContainer.innerHTML += cardHTML;
+    } else if (fundContainer) {
+      fundContainer.innerHTML += cardHTML;
+    }
   });
 
-  document.getElementById('summary-total-fund').innerText = formatMoney(totalFund);
-  document.getElementById('summary-total-debt').innerText = formatMoney(totalDebt);
+  const noDebtMsg = document.getElementById('no-debt-msg');
+  if(noDebtMsg) {
+    if (hasDebt) noDebtMsg.classList.add('hidden');
+    else noDebtMsg.classList.remove('hidden');
+  }
+
+  const summaryFund = document.getElementById('summary-total-fund');
+  if(summaryFund) summaryFund.innerText = formatMoney(totalFund);
+  
+  const summaryDebt = document.getElementById('summary-total-debt');
+  if(summaryDebt) summaryDebt.innerText = formatMoney(totalDebt);
 }
 
 function openAddMemberModal() { openModal('add-member-modal'); }
@@ -167,11 +195,30 @@ async function deleteMember(id, name) {
   loadMembers();
 }
 
-function openDepositModal(id, name) {
+function openDepositModal(id, name, amount = '') {
   document.getElementById('deposit-member-id').value = id;
   document.getElementById('deposit-member-name').innerText = name;
-  document.getElementById('deposit-amount').value = '';
+  document.getElementById('deposit-amount').value = amount;
   openModal('deposit-modal');
+}
+
+function copyDebtReminder() {
+  const debtors = allMembers.filter(m => m.balance < 0);
+  if (debtors.length === 0) return alert('Không có ai nợ quỹ!');
+  
+  let text = `⚠️ DANH SÁCH CHƯA ĐÓNG QUỸ:\n`;
+  debtors.forEach(m => {
+    text += `- ${m.name}: đang âm ${formatMoney(Math.abs(m.balance))}\n`;
+  });
+  text += `\nMọi người nhớ nạp thêm để duy trì quỹ sân nhé! Cảm ơn anh em.`;
+  
+  const tempInput = document.createElement('textarea');
+  tempInput.value = text;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  document.execCommand('copy');
+  document.body.removeChild(tempInput);
+  alert('Đã copy danh sách nhắc nợ!');
 }
 
 async function submitDeposit() {

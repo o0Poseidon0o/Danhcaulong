@@ -118,8 +118,22 @@
           </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="members-list">
-          <!-- Rendered by JS -->
+        <div class="mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-lg font-bold text-red-700">Chưa đóng / Đang nợ</h3>
+            <button onclick="copyDebtReminder()" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 border border-red-300 transition shadow-sm">📋 Copy nhắc nợ</button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="members-debt-list">
+            <!-- Rendered by JS -->
+          </div>
+          <p id="no-debt-msg" class="text-sm text-gray-500 italic hidden mt-2">Tuyệt vời, không có ai nợ quỹ!</p>
+        </div>
+
+        <div class="mb-4 mt-8">
+          <h3 class="text-lg font-bold text-green-700 mb-2">Đã đóng / Có số dư</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="members-fund-list">
+            <!-- Rendered by JS -->
+          </div>
         </div>
       </div>
 
