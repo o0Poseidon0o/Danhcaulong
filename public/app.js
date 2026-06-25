@@ -468,9 +468,9 @@ function renderAttendanceList() {
   container.innerHTML = '';
   allMembers.forEach(m => {
     container.innerHTML += `
-      <label class="flex items-center space-x-2 bg-white p-2 rounded border border-gray-200 cursor-pointer hover:bg-blue-50">
-        <input type="checkbox" value="${m._id}" data-name="${m.name}" class="attendance-cb w-4 h-4 text-blue-600 rounded" onchange="updateAttendanceCount(); calculatePreview();">
-        <span class="text-sm font-medium text-gray-700">${m.name}</span>
+      <label class="relative flex items-center justify-center p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50/50 transition-all shadow-sm bg-white has-[:checked]:bg-blue-100 has-[:checked]:border-blue-500 has-[:checked]:shadow-md group select-none">
+        <input type="checkbox" value="${m._id}" data-name="${m.name}" class="attendance-cb absolute opacity-0 w-0 h-0" onchange="updateAttendanceCount(); calculatePreview();">
+        <span class="text-sm font-bold text-gray-700 group-has-[:checked]:text-blue-800 truncate text-center w-full">${m.name}</span>
       </label>
     `;
   });
