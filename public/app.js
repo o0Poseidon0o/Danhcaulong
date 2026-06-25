@@ -127,22 +127,22 @@ function renderMembersTab() {
     const defaultAmount = isDebt ? Math.abs(m.balance) : '';
 
     const cardHTML = `
-      <div class="${bgColor} border ${borderColor} rounded-xl p-3.5 shadow-sm transition-all hover:shadow-md flex flex-col justify-between">
-        <div class="flex justify-between items-center mb-3">
+      <div class="${bgColor} border ${borderColor} rounded-xl p-3 shadow-sm transition-all hover:shadow-md flex flex-col justify-between">
+        <div class="flex justify-between items-center mb-2">
           <h3 class="font-bold text-gray-800 text-base truncate pr-2">${m.name}</h3>
-          <span class="${textColor} font-bold bg-white px-2.5 py-1 rounded-full text-sm shadow-sm border ${borderColor} whitespace-nowrap">
+          <span class="${textColor} font-bold bg-white px-2 py-0.5 rounded-full text-sm shadow-sm border ${borderColor} whitespace-nowrap">
             ${formatMoney(m.balance)}
           </span>
         </div>
         
-        <div class="flex gap-2 w-full admin-only-cell">
+        <div class="gap-2 w-full admin-only-flex mt-1">
           <button onclick="openDepositModal('${m._id}', '${m.name}', ${defaultAmount ? `'${defaultAmount}'` : "''"})" class="flex-1 ${actionBtnClass} rounded-lg text-sm py-1.5 font-medium flex justify-center items-center gap-1 transition-colors shadow-sm">
             ${isDebt ? '💳 Thu nợ' : '💰 Nạp quỹ'}
           </button>
-          <button onclick="openEditBalanceModal('${m._id}', '${m.name}', ${m.balance})" class="bg-white text-gray-600 rounded-lg px-3 py-1.5 border border-gray-200 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm flex items-center justify-center" title="Sửa số dư">
+          <button onclick="openEditBalanceModal('${m._id}', '${m.name}', ${m.balance})" class="bg-white text-gray-600 rounded-lg px-2.5 py-1.5 border border-gray-200 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm flex items-center justify-center" title="Sửa số dư">
             ✏️
           </button>
-          <button onclick="deleteMember('${m._id}', '${m.name}')" class="bg-white text-gray-600 rounded-lg px-3 py-1.5 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors shadow-sm flex items-center justify-center" title="Xóa thành viên">
+          <button onclick="deleteMember('${m._id}', '${m.name}')" class="bg-white text-gray-600 rounded-lg px-2.5 py-1.5 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors shadow-sm flex items-center justify-center" title="Xóa thành viên">
             🗑️
           </button>
         </div>
