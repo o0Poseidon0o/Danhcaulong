@@ -183,7 +183,6 @@
                 <th class="py-2 px-3">Người</th>
                 <th class="py-2 px-3">Biến động</th>
                 <th class="py-2 px-3">Nội dung</th>
-                <th class="py-2 px-3 text-right admin-only-cell">Thao tác</th>
               </tr>
             </thead>
             <tbody id="transactions-list">
@@ -298,23 +297,24 @@
     </div>
   </div>
 
-  <!-- Sửa Giao Dịch Modal -->
-  <div id="edit-transaction-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <!-- Sửa Số Dư Modal -->
+  <div id="edit-balance-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
-      <h3 class="text-lg font-bold mb-4">Sửa giao dịch nạp quỹ</h3>
-      <p class="text-sm mb-4">Giao dịch của: <span id="edit-tx-member-name" class="font-bold text-blue-600"></span></p>
-      <input type="hidden" id="edit-tx-id">
+      <h3 class="text-lg font-bold mb-4">Điều chỉnh Quỹ (Sửa lỗi)</h3>
+      <p class="text-sm mb-4">Thành viên: <span id="edit-balance-member-name" class="font-bold text-blue-600"></span></p>
+      <input type="hidden" id="edit-balance-member-id">
       <div class="mb-4">
-        <label class="block text-sm text-gray-600 mb-1">Số tiền đúng (VNĐ)</label>
-        <input type="text" id="edit-tx-amount" class="w-full border border-gray-300 rounded p-2 text-lg font-bold text-blue-700" oninput="formatInputCurrency(this)">
+        <label class="block text-sm text-gray-600 mb-1">Số dư thực tế đúng (VNĐ)</label>
+        <p class="text-xs text-gray-500 mb-2">Ví dụ: Nếu đang âm 500k nhưng thực chất là đã nộp rồi thì điền 0. Nếu đang dương 500k nhưng nộp lố 1 số 0 thì điền 50k.</p>
+        <input type="text" id="edit-balance-amount" class="w-full border border-gray-300 rounded p-2 text-lg font-bold text-blue-700" placeholder="Số dư chuẩn xác" oninput="formatInputCurrency(this)">
       </div>
       <div class="mb-4">
-        <label class="block text-sm text-gray-600 mb-1">Nội dung ghi chú</label>
-        <input type="text" id="edit-tx-description" class="w-full border border-gray-300 rounded p-2">
+        <label class="block text-sm text-gray-600 mb-1">Lý do điều chỉnh (không bắt buộc)</label>
+        <input type="text" id="edit-balance-reason" class="w-full border border-gray-300 rounded p-2" placeholder="VD: Nhập nhầm lúc nãy">
       </div>
       <div class="flex justify-end gap-2">
-        <button onclick="closeModal('edit-transaction-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
-        <button onclick="submitEditTransaction()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Lưu thay đổi</button>
+        <button onclick="closeModal('edit-balance-modal')" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
+        <button onclick="submitEditBalance()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Lưu quỹ mới</button>
       </div>
     </div>
   </div>

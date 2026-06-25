@@ -97,12 +97,46 @@ app.post('/api/members/:id/deposit', authMiddleware, async (req, res) => {
       member: member._id,
       type: 'DEPOSIT',
       amount: amount,
-      description: `Nạp quỹ: +${amount.toLocaleString('vi-VN')}đ`
+      description: `Nạp quỹ/Thu nợ: +${amount.toLocaleString('vi-VN')}đ`
     });
     await tx.save();
 
     res.json(member);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Chỉnh sửa số dư trực tiếp (Điều chỉnh quỹ)
+app.post('/api/members/:id/adjust-balance', authMiddleware, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { newBalance, reason } = req.body;
+    const member = await Member.findById(req.params.id).session(session);
+    if (!member) throw new Error('Member not found');
+
+    const diff = newBalance - member.balance;
+    if (diff !== 0) {
+      member.balance = newBalance;
+      await member.save({ session });
+
+      const sign = diff > 0 ? '+' : '';
+      const tx = new Transaction({
+        member: member._id,
+        type: 'DEPOSIT', // Sử dụng DEPOSIT vì đây là dòng tiền nạp/rút thủ công
+        amount: diff,
+        description: `Điều chỉnh số dư: ${sign}${diff.toLocaleString('vi-VN')}đ${reason ? ` (${reason})` : ''}`
+      });
+      await tx.save({ session });
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+    res.json(member);
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
     res.status(500).json({ error: err.message });
   }
 });
@@ -286,69 +320,6 @@ app.get('/api/transactions', async (req, res) => {
     const transactions = await Transaction.find().sort({ date: -1 }).populate('member').limit(50);
     res.json(transactions);
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.put('/api/transactions/:id', authMiddleware, async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const { amount, description } = req.body;
-    const tx = await Transaction.findById(req.params.id).session(session);
-    if (!tx) throw new Error('Không tìm thấy giao dịch');
-    
-    if (tx.type !== 'DEPOSIT') {
-      throw new Error('Chỉ có thể sửa các giao dịch Nạp quỹ/Thu nợ.');
-    }
-
-    const diff = amount - tx.amount;
-    
-    const member = await Member.findById(tx.member).session(session);
-    if (member) {
-      member.balance += diff;
-      await member.save({ session });
-    }
-
-    tx.amount = amount;
-    tx.description = description || `Cập nhật giao dịch: +${amount.toLocaleString('vi-VN')}đ`;
-    await tx.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-    res.json(tx);
-  } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete('/api/transactions/:id', authMiddleware, async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const tx = await Transaction.findById(req.params.id).session(session);
-    if (!tx) throw new Error('Không tìm thấy giao dịch');
-    
-    if (tx.type !== 'DEPOSIT') {
-      throw new Error('Chỉ có thể xóa các giao dịch Nạp quỹ/Thu nợ.');
-    }
-
-    const member = await Member.findById(tx.member).session(session);
-    if (member) {
-      member.balance -= tx.amount;
-      await member.save({ session });
-    }
-
-    await Transaction.findByIdAndDelete(tx._id).session(session);
-
-    await session.commitTransaction();
-    session.endSession();
-    res.json({ message: 'Đã xóa giao dịch và hoàn quỹ' });
-  } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
     res.status(500).json({ error: err.message });
   }
 });

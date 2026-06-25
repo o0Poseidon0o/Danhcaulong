@@ -136,18 +136,23 @@ function renderMembersTab() {
 
     const cardHTML = `
       <div class="${bgColor} border ${borderColor} rounded-lg p-4 flex justify-between items-center shadow-sm relative group">
+      <div class="${bgColor} border ${borderColor} rounded-lg p-4 shadow-sm relative group">
         <div>
           <h3 class="font-bold ${textColor}">${m.name}</h3>
           <p class="${textColor} font-medium mt-1">Quỹ: ${formatMoney(m.balance)}</p>
         </div>
-        <div class="flex gap-2">
-          ${m.balance < 0 ? 
-            `<button onclick="openDepositModal('${m._id}', '${m.name}', ${Math.abs(m.balance)})" class="bg-red-600 text-white text-sm font-medium px-3 py-1 rounded shadow hover:bg-red-700 admin-only">Thu nợ</button>` : 
-            `<button onclick="openDepositModal('${m._id}', '${m.name}')" class="bg-white text-sm font-medium px-3 py-1 rounded shadow text-gray-700 hover:bg-gray-50 border border-gray-200 admin-only">Nạp tiền</button>`
-          }
-          <button onclick="deleteMember('${m._id}', '${m.name}')" class="bg-red-50 text-red-600 text-sm font-medium px-2 py-1 rounded shadow-sm border border-red-200 hover:bg-red-100 admin-only" title="Xóa thành viên">
-            🗑️
+        <div class="flex flex-col gap-2 w-full mt-2 admin-only-cell">
+          <button onclick="openDepositModal('${m._id}', '${m.name}')" class="w-full px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+            Nạp tiền quỹ
           </button>
+          <div class="flex gap-2">
+            <button onclick="openEditBalanceModal('${m._id}', '${m.name}', ${m.balance})" class="flex-1 px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 border border-gray-300 flex items-center justify-center gap-1">
+              ✏️ Sửa số dư
+            </button>
+            <button onclick="deleteMember('${m._id}', '${m.name}')" class="px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 text-xs flex items-center justify-center" title="Xóa thành viên">
+              🗑️ Xóa
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -223,6 +228,54 @@ function openDepositModal(id, name, amount = '') {
   }
   
   openModal('deposit-modal');
+}
+
+function openEditBalanceModal(id, memberName, currentBalance) {
+  document.getElementById('edit-balance-member-id').value = id;
+  document.getElementById('edit-balance-member-name').innerText = memberName;
+  document.getElementById('edit-balance-amount').value = new Intl.NumberFormat('vi-VN').format(Math.abs(currentBalance));
+  // Keep the negative sign if it was negative for the input text context
+  if (currentBalance < 0) {
+    document.getElementById('edit-balance-amount').value = '-' + document.getElementById('edit-balance-amount').value;
+  }
+  document.getElementById('edit-balance-reason').value = '';
+  openModal('edit-balance-modal');
+}
+
+async function submitEditBalance() {
+  const id = document.getElementById('edit-balance-member-id').value;
+  let rawValue = document.getElementById('edit-balance-amount').value;
+  // Handle negative values
+  const isNegative = rawValue.includes('-');
+  rawValue = rawValue.replace(/[^\d]/g, '');
+  if (rawValue === '') return alert('Vui lòng nhập số dư chuẩn xác');
+  
+  let newBalance = parseInt(rawValue);
+  if (isNegative) newBalance = -newBalance;
+  
+  const reason = document.getElementById('edit-balance-reason').value;
+
+  if (!confirm(`Xác nhận điều chỉnh số dư của thành viên này thành ${formatMoney(newBalance)}? Hệ thống sẽ tự bù trừ quỹ tương ứng.`)) return;
+
+  try {
+    const res = await fetch(`${API_URL}/members/${id}/adjust-balance`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ newBalance, reason })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Lỗi hệ thống');
+    }
+    
+    closeModal('edit-balance-modal');
+    loadMembers();
+    loadTransactions();
+    alert('Điều chỉnh số dư thành công!');
+  } catch (err) {
+    alert('Lỗi: ' + err.message);
+  }
 }
 
 function copyDebtReminder() {
@@ -558,75 +611,11 @@ async function loadTransactions() {
           <td class="py-2 px-3 font-medium text-gray-800">${t.member ? t.member.name : '?'}</td>
           <td class="py-2 px-3 font-bold ${amountClass}">${amountSign}${formatMoney(t.amount)}</td>
           <td class="py-2 px-3 text-sm text-gray-600">${t.description}</td>
-          <td class="py-2 px-3 text-right admin-only-cell">
-            ${t.type === 'DEPOSIT' ? `
-              <button onclick="openEditTransactionModal('${t._id}', '${t.member ? t.member.name : '?'}', ${t.amount}, '${t.description}')" class="text-blue-600 hover:text-blue-800 font-medium text-sm mr-3">Sửa</button>
-              <button onclick="deleteTransaction('${t._id}')" class="text-red-600 hover:text-red-800 font-medium text-sm">Xóa</button>
-            ` : ''}
-          </td>
         </tr>
       `;
     });
   } catch (err) {
     console.error(err);
-  }
-}
-
-function openEditTransactionModal(id, memberName, currentAmount, description) {
-  document.getElementById('edit-tx-id').value = id;
-  document.getElementById('edit-tx-member-name').innerText = memberName;
-  const input = document.getElementById('edit-tx-amount');
-  input.value = new Intl.NumberFormat('vi-VN').format(currentAmount);
-  document.getElementById('edit-tx-description').value = description;
-  openModal('edit-transaction-modal');
-}
-
-async function submitEditTransaction() {
-  const id = document.getElementById('edit-tx-id').value;
-  const rawValue = document.getElementById('edit-tx-amount').value.replace(/\D/g, '');
-  const amount = parseInt(rawValue);
-  const description = document.getElementById('edit-tx-description').value;
-
-  if (!amount || amount <= 0) return alert('Số tiền không hợp lệ');
-
-  if (!confirm(`Bạn chắc chắn muốn sửa thành ${formatMoney(amount)} không? Quỹ sẽ tự động bù trừ phần chênh lệch.`)) return;
-
-  try {
-    const res = await fetch(`${API_URL}/transactions/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ amount, description })
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Lỗi hệ thống');
-    }
-    closeModal('edit-transaction-modal');
-    loadTransactions();
-    loadMembers(); // Cập nhật lại quỹ bên tab thành viên
-    alert('Sửa giao dịch thành công!');
-  } catch (err) {
-    alert('Lỗi: ' + err.message);
-  }
-}
-
-async function deleteTransaction(id) {
-  if (!confirm('Bạn có chắc chắn muốn xóa giao dịch này? Số tiền đã nạp sẽ bị trừ lại khỏi quỹ của người đó.')) return;
-  
-  try {
-    const res = await fetch(`${API_URL}/transactions/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Lỗi hệ thống');
-    }
-    loadTransactions();
-    loadMembers(); // Cập nhật lại quỹ
-    alert('Xóa giao dịch thành công!');
-  } catch (err) {
-    alert('Lỗi: ' + err.message);
   }
 }
 
