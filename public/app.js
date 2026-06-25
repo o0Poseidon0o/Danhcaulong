@@ -270,6 +270,7 @@ async function loadInventory() {
       tbody.innerHTML += `
         <tr class="border-b hover:bg-gray-50">
           <td class="py-2 px-3">${new Date(b.importDate).toLocaleDateString('vi-VN')}</td>
+          <td class="py-2 px-3 font-medium text-gray-700">${b.brand || 'Chưa rõ'}</td>
           <td class="py-2 px-3">${perTube} quả/ống</td>
           <td class="py-2 px-3">${formatMoney(b.pricePerTube)}</td>
           <td class="py-2 px-3 font-medium">${b.remainingShuttles} quả (${tubesLeft} ống)</td>
@@ -288,6 +289,7 @@ async function loadInventory() {
 function openAddInventoryModal() { openModal('add-inventory-modal'); }
 
 async function submitInventory() {
+  const brand = document.getElementById('new-inventory-brand').value;
   const tubes = parseInt(document.getElementById('new-inventory-tubes').value);
   const shuttlesPerTube = parseInt(document.getElementById('new-inventory-shuttles-per-tube').value) || 12;
   const price = parseInt(document.getElementById('new-inventory-price').value);
@@ -296,7 +298,7 @@ async function submitInventory() {
   const res = await fetch(`${API_URL}/inventory`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ totalTubes: tubes, pricePerTube: price, shuttlesPerTube })
+    body: JSON.stringify({ brand, totalTubes: tubes, pricePerTube: price, shuttlesPerTube })
   });
 
   if (!res.ok) {
@@ -305,6 +307,7 @@ async function submitInventory() {
   }
 
   closeModal('add-inventory-modal');
+  document.getElementById('new-inventory-brand').value = '';
   document.getElementById('new-inventory-tubes').value = '';
   document.getElementById('new-inventory-shuttles-per-tube').value = '12';
   document.getElementById('new-inventory-price').value = '';
@@ -324,6 +327,7 @@ function openEditInventoryModal(id) {
   const day = String(d.getDate()).padStart(2, '0');
   document.getElementById('edit-inventory-date').value = `${year}-${month}-${day}`;
 
+  document.getElementById('edit-inventory-brand').value = batch.brand || '';
   document.getElementById('edit-inventory-tubes').value = batch.totalTubes;
   document.getElementById('edit-inventory-shuttles-per-tube').value = batch.shuttlesPerTube || 12;
   document.getElementById('edit-inventory-price').value = batch.pricePerTube;
@@ -335,6 +339,7 @@ function openEditInventoryModal(id) {
 async function submitEditInventory() {
   const id = document.getElementById('edit-inventory-id').value;
   const importDate = document.getElementById('edit-inventory-date').value;
+  const brand = document.getElementById('edit-inventory-brand').value;
   const tubes = parseInt(document.getElementById('edit-inventory-tubes').value);
   const shuttlesPerTube = parseInt(document.getElementById('edit-inventory-shuttles-per-tube').value) || 12;
   const price = parseInt(document.getElementById('edit-inventory-price').value);
@@ -346,6 +351,7 @@ async function submitEditInventory() {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify({ 
+      brand,
       totalTubes: tubes, 
       pricePerTube: price, 
       shuttlesPerTube, 

@@ -158,6 +158,7 @@
             <thead class="bg-gray-50 border-b">
               <tr>
                 <th class="py-2 px-3">Ngày nhập</th>
+                <th class="py-2 px-3">Loại cầu</th>
                 <th class="py-2 px-3">Quy cách</th>
                 <th class="py-2 px-3">Giá ống</th>
                 <th class="py-2 px-3">Tồn (quả)</th>
@@ -232,6 +233,10 @@
     <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
       <h3 class="text-lg font-bold mb-4">Nhập cầu mới</h3>
       <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Thương hiệu / Loại cầu</label>
+        <input type="text" id="new-inventory-brand" class="w-full border border-gray-300 rounded p-2" placeholder="VD: VinaStar, Thành Công...">
+      </div>
+      <div class="mb-4">
         <label class="block text-sm text-gray-600 mb-1">Số lượng ống</label>
         <input type="number" id="new-inventory-tubes" class="w-full border border-gray-300 rounded p-2" placeholder="VD: 5">
       </div>
@@ -258,6 +263,10 @@
       <div class="mb-4">
         <label class="block text-sm text-gray-600 mb-1">Ngày nhập</label>
         <input type="date" id="edit-inventory-date" class="w-full border border-gray-300 rounded p-2">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Thương hiệu / Loại cầu</label>
+        <input type="text" id="edit-inventory-brand" class="w-full border border-gray-300 rounded p-2" placeholder="VD: VinaStar">
       </div>
       <div class="mb-4">
         <label class="block text-sm text-gray-600 mb-1">Số lượng ống</label>

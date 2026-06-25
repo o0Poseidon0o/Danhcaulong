@@ -121,9 +121,10 @@ app.get('/api/inventory', async (req, res) => {
 
 app.post('/api/inventory', authMiddleware, async (req, res) => {
   try {
-    const { totalTubes, pricePerTube, shuttlesPerTube } = req.body;
+    const { brand, totalTubes, pricePerTube, shuttlesPerTube } = req.body;
     const countPerTube = shuttlesPerTube || 12;
     const batch = new ShuttleBatch({
+      brand: brand || 'Chưa rõ',
       totalTubes,
       pricePerTube,
       shuttlesPerTube: countPerTube,
@@ -140,11 +141,12 @@ app.post('/api/inventory', authMiddleware, async (req, res) => {
 // Cập nhật lô cầu
 app.put('/api/inventory/:id', authMiddleware, async (req, res) => {
   try {
-    const { totalTubes, pricePerTube, shuttlesPerTube, remainingShuttles, importDate } = req.body;
+    const { brand, totalTubes, pricePerTube, shuttlesPerTube, remainingShuttles, importDate } = req.body;
     const batch = await ShuttleBatch.findById(req.params.id);
     if (!batch) return res.status(404).json({ error: 'Không tìm thấy lô cầu' });
 
     const countPerTube = shuttlesPerTube || 12;
+    if (brand) batch.brand = brand;
     batch.totalTubes = totalTubes;
     batch.pricePerTube = pricePerTube;
     batch.shuttlesPerTube = countPerTube;
