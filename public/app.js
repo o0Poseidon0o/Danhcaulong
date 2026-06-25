@@ -115,44 +115,36 @@ function renderMembersTab() {
       hasDebt = true;
     }
     
-    // Determine color based on balance
-    let bgColor = 'bg-green-100';
-    let textColor = 'text-green-800';
-    let borderColor = 'border-green-300';
+    const isDebt = m.balance < 0;
+    const bgColor = isDebt ? 'bg-red-50' : 'bg-green-50';
+    const borderColor = isDebt ? 'border-red-200' : 'border-green-200';
+    const textColor = isDebt ? 'text-red-700' : 'text-green-700';
     
-    if (m.balance < 0) {
-      bgColor = 'bg-red-50';
-      textColor = 'text-red-800';
-      borderColor = 'border-red-300';
-    } else if (m.balance === 0) {
-      bgColor = 'bg-gray-50';
-      textColor = 'text-gray-800';
-      borderColor = 'border-gray-300';
-    } else if (m.balance < 50000) {
-      bgColor = 'bg-yellow-50';
-      textColor = 'text-yellow-800';
-      borderColor = 'border-yellow-300';
-    }
+    const actionBtnClass = isDebt 
+      ? 'bg-red-600 hover:bg-red-700 text-white' 
+      : 'bg-blue-600 hover:bg-blue-700 text-white';
+    const actionBtnText = isDebt ? 'Thu nợ' : 'Nạp quỹ';
+    const defaultAmount = isDebt ? Math.abs(m.balance) : '';
 
     const cardHTML = `
-      <div class="${bgColor} border ${borderColor} rounded-lg p-4 flex justify-between items-center shadow-sm relative group">
-      <div class="${bgColor} border ${borderColor} rounded-lg p-4 shadow-sm relative group">
-        <div>
-          <h3 class="font-bold ${textColor}">${m.name}</h3>
-          <p class="${textColor} font-medium mt-1">Quỹ: ${formatMoney(m.balance)}</p>
+      <div class="${bgColor} border ${borderColor} rounded-xl p-3.5 shadow-sm transition-all hover:shadow-md flex flex-col justify-between">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-bold text-gray-800 text-base truncate pr-2">${m.name}</h3>
+          <span class="${textColor} font-bold bg-white px-2.5 py-1 rounded-full text-sm shadow-sm border ${borderColor} whitespace-nowrap">
+            ${formatMoney(m.balance)}
+          </span>
         </div>
-        <div class="flex flex-col gap-2 w-full mt-2 admin-only-cell">
-          <button onclick="openDepositModal('${m._id}', '${m.name}')" class="w-full px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-            Nạp tiền quỹ
+        
+        <div class="flex gap-2 w-full admin-only-cell">
+          <button onclick="openDepositModal('${m._id}', '${m.name}', ${defaultAmount ? `'${defaultAmount}'` : "''"})" class="flex-1 ${actionBtnClass} rounded-lg text-sm py-1.5 font-medium flex justify-center items-center gap-1 transition-colors shadow-sm">
+            ${isDebt ? '💳 Thu nợ' : '💰 Nạp quỹ'}
           </button>
-          <div class="flex gap-2">
-            <button onclick="openEditBalanceModal('${m._id}', '${m.name}', ${m.balance})" class="flex-1 px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 border border-gray-300 flex items-center justify-center gap-1">
-              ✏️ Sửa số dư
-            </button>
-            <button onclick="deleteMember('${m._id}', '${m.name}')" class="px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 text-xs flex items-center justify-center" title="Xóa thành viên">
-              🗑️ Xóa
-            </button>
-          </div>
+          <button onclick="openEditBalanceModal('${m._id}', '${m.name}', ${m.balance})" class="bg-white text-gray-600 rounded-lg px-3 py-1.5 border border-gray-200 hover:bg-gray-50 hover:text-blue-600 transition-colors shadow-sm flex items-center justify-center" title="Sửa số dư">
+            ✏️
+          </button>
+          <button onclick="deleteMember('${m._id}', '${m.name}')" class="bg-white text-gray-600 rounded-lg px-3 py-1.5 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors shadow-sm flex items-center justify-center" title="Xóa thành viên">
+            🗑️
+          </button>
         </div>
       </div>
     `;
